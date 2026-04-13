@@ -1,0 +1,23 @@
+Vocabulary (9 chars): [' ', 'd', 'e', 'h', 'l', 'o', 'p', 'r', 'w']
+
+Training on: cpu
+Model parameters: 84,393
+Epoch  5/20 | Loss: 0.9721
+Epoch 10/20 | Loss: 0.3735
+Epoch 15/20 | Loss: 0.2147
+Epoch 20/20 | Loss: 0.1615
+
+=======================================================
+Temperature-Controlled Text Generation (seed = 'h')
+=======================================================
+
+tau = 0.7:
+hre hello help here hello hello hello help here hello help hello help here hello help hello help here help here hello hello help here hello hello hello help here hello help hello world hello help here hello hello help here hello hello help hello world help here hello hello hello help hello world hell
+
+tau = 1.0:
+hello help hello help hello world help here hello help hello world hello help here hello help here hello hello help hello world hello help here hello hello hello hello help here hello worlo hello help hello world help here hell hello world help here hello help here hello hello help hello world hello 
+
+tau = 1.2:
+hello help hello world help here hellp hello hello hello hello hello help here hello world world help he hello world help hello woello help here hello hello hello oelo world help here hellp hellp hello hello world help here hello help here hello hello help here hello world help here hello help here h
+
+Loss curve saved → rnn_loss_curve.png

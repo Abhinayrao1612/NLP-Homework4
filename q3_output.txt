@@ -1,0 +1,79 @@
+============================================================
+TEST 1 — Basic Scaled Dot-Product Attention
+============================================================
+
+Input shapes:
+  Q = (4, 8)  (seq_len=4, d_k=8)
+  K = (4, 8)  (seq_len=4, d_k=8)
+  V = (4, 8)  (seq_len=4, d_v=8)
+
+Scale factor: 1 / sqrt(8) = 0.3536
+
+─── Softmax Stability Check ────────────────────────────
+Raw QKᵀ scores  — max: 4.3192,  min: -8.6428,  std: 3.0731
+[[-5.8108 -3.6962 -4.3623 -8.6428]
+ [-3.5381  4.3192 -1.413   1.1963]
+ [-3.0255 -1.0973 -1.4376  1.4581]
+ [-1.5793 -1.7662 -1.538   0.7021]]
+
+Scaled QKᵀ/sqrt(d_k) — max: 1.5271,  min: -3.0557,  std: 1.0865
+[[-2.0544 -1.3068 -1.5423 -3.0557]
+ [-1.2509  1.5271 -0.4996  0.4229]
+ [-1.0697 -0.3879 -0.5083  0.5155]
+ [-0.5584 -0.6244 -0.5437  0.2482]]
+
+Observation: scaling reduces std by factor sqrt(d_k), keeping softmax
+in a well-distributed regime with healthy gradients during training.
+
+─── Attention Weight Matrix (after softmax) ────────────
+[[0.1942 0.4102 0.3242 0.0714]
+ [0.0408 0.6555 0.0864 0.2173]
+ [0.1041 0.2057 0.1824 0.5078]
+ [0.1926 0.1803 0.1955 0.4316]]
+
+Row sums (all must equal 1.0): [1. 1. 1. 1.]
+✓ All rows sum to 1.0
+
+─── Output Vectors (weighted sum of Values) ────────────
+[[ 0.2667  0.2371 -0.0554  0.1298  0.3541 -0.1906 -0.6448 -0.0085]
+ [ 0.1086  0.2444 -0.2164  0.3814  0.0631 -0.5633 -1.1007 -0.3306]
+ [ 0.4947 -0.1095 -0.535   0.342  -0.6224 -0.4772  0.3223  0.2335]
+ [ 0.5705 -0.0146 -0.2775  0.3238 -0.468  -0.4084  0.1981  0.3296]]
+
+============================================================
+TEST 2 — Causal (Decoder) Masked Attention
+============================================================
+
+Causal mask (lower-triangular):  1 = can attend, 0 = blocked (→ -inf)
+[[1 0 0 0]
+ [1 1 0 0]
+ [1 1 1 0]
+ [1 1 1 1]]
+
+Scaled scores after applying mask (upper triangle = -inf → weight=0):
+[[-2.0544    -inf    -inf    -inf]
+ [-1.2509  1.5271    -inf    -inf]
+ [-1.0697 -0.3879 -0.5083    -inf]
+ [-0.5584 -0.6244 -0.5437  0.2482]]
+
+Attention weights with causal mask:
+[[1.     0.     0.     0.    ]
+ [0.0585 0.9415 0.     0.    ]
+ [0.2114 0.418  0.3706 0.    ]
+ [0.1926 0.1803 0.1955 0.4316]]
+
+Row sums (masked): [1. 1. 1. 1.]
+✓ Rows still sum to 1.0 even with masking
+
+─── Masked Output Vectors ──────────────────────────────
+[[ 1.4451  0.8564  2.2181  0.5232  0.3466 -0.1973 -1.0546  1.278 ]
+ [-0.0775  0.5433  0.1831  0.432   0.5616 -0.6157 -2.139  -0.6321]
+ [ 0.2376  0.2744 -0.0043  0.0718  0.5123 -0.1155 -0.7223 -0.0245]
+ [ 0.5705 -0.0146 -0.2775  0.3238 -0.468  -0.4084  0.1981  0.3296]]
+
+Observation:
+  Token 0 attends only to itself (weight = 1.0).
+  Token 1 attends to positions 0 and 1 only.
+  Token 3 (last) attends to all positions — full context.
+  Upper-triangular entries are exactly 0, enforcing the
+  autoregressive property required in Transformer decoders.
